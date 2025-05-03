@@ -1,0 +1,57 @@
+
+3. Vyhľadávanie všetkých položiek v košíku pre konkrétneho používateľa
+SELECT T.nazov, K.mnozstvo
+FROM Kosik K
+JOIN Pouzivatel P ON K.id_pouzivatel = P.id_pouzivatel
+JOIN Tovar T ON K.id_tovar = T.id_tovar
+WHERE P.meno = 'Milan Horváth'; -- zmeň meno podľa potreby
+
+5. Vyhľadanie faktúr konkrétneho používateľa
+SELECT F.id_faktura, F.datum_vystavenia, F.datum_splatnosti, F.suma, F.suma_s_dph
+FROM Faktura F
+JOIN Pouzivatel P ON F.id_pouzivatel = P.id_pouzivatel
+WHERE P.meno = 'Andrea Kováčová'; -- meno podľa potreby
+
+9.Pridanie tovaru do košíka
+-- Skontrolovať, či už položka v košíku je
+SELECT id_kosik, mnozstvo
+FROM Kosik
+WHERE id_pouzivatel = ? AND id_tovar = ?;
+
+-- Ak existuje, tak UPDATE:
+UPDATE Kosik
+SET mnozstvo = mnozstvo + ?
+WHERE id_pouzivatel = ? AND id_tovar = ?;
+
+
+11.Odstránenie položky z košíka
+DELETE FROM Kosik
+WHERE id_pouzivatel = ? AND id_tovar = ?;
+
+12.Vytvorenie faktúry (po dokončení objednávky)
+-- 1. Spočítať cenu z košíka:
+SELECT SUM(K.mnozstvo * T.cena) AS suma
+FROM Kosik K
+JOIN Tovar T ON K.id_tovar = T.id_tovar
+WHERE K.id_pouzivatel = ?;
+
+-- 2. Vložiť novú faktúru:
+INSERT INTO Faktura (id_pouzivatel, datum_vystavenia, datum_splatnosti, suma, suma_s_dph)
+VALUES (?, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 14 DAY), ?, ?); -- suma a suma_s_dph (napr. +20 % DPH)
+
+-- 3. Vymazať košík po vytvorení faktúry:
+DELETE FROM Kosik
+WHERE id_pouzivatel = ?;
+
+13.Výpis faktúr používateľa
+SELECT id_faktura, datum_vystavenia, datum_splatnosti, suma, suma_s_dph
+FROM Faktura
+WHERE id_pouzivatel = ?;
+
+14.Aktualizácia skladu pri nákupe (zníženie množstva)
+-- Pre každý tovar v košíku:
+UPDATE Sklad
+SET pocet = pocet - ?
+WHERE id_tovar = ? AND id_predajna = ?; -- (predpokladáš, že vieš z ktorej predajne sa expeduje)
+
+
