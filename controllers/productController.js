@@ -332,7 +332,7 @@ exports.getDpfFilters = (req, res) => {
     JOIN 
       Predajna P ON S.id_predajna = P.id_predajna
     WHERE 
-      T.nazov LIKE '%Filtračná vložka%' 
+      T.nazov LIKE '%DPF%' 
       AND V.id_vozidlo = ?
     GROUP BY 
       T.nazov, P.nazov
