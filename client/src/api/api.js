@@ -140,3 +140,24 @@ export const register = async (name, password, password2) => {
 
   return response.data;
 };
+
+// 16. Zobraziť všetky DPF filtre pre vybrané vozidlo
+export const getDpfFilters = async (vehicleId) => {
+  const url = `${API_URL}/products/dpf/${encodeURIComponent(vehicleId)}`;
+  const { data } = await axios.get(url);
+  return data;
+};
+
+//
+// 17. Predajne, kde je menej ako 10 kusov oleja 10W-40
+export const getStoresLowOil10w40 = async () => {
+  const response = await axios.get(`${API_URL}/stores/low-oil-10w40`);
+  return response.data;
+};
+
+//
+// 18. Zoznam kategórií a ich priemerná cena pre tovar na sklade
+export const getCategoriesAvgPrice = async () => {
+  const response = await axios.get(`${API_URL}/categories/average-price`);
+  return response.data;
+};

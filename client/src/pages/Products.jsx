@@ -154,6 +154,12 @@ const Products = () => {
           {/* Tlačidlá */}
           <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
             <button
+              onClick={() => navigate("/dashboard")}
+              className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md transition"
+            >
+              Dopyty
+            </button>
+            <button
               onClick={() => navigate("/faktury")}
               className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md transition"
             >

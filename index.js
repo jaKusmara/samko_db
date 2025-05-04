@@ -10,7 +10,6 @@ app.use(cors());
 app.use(express.json());
 
 // ROUTES
-// Products endpoints with optional ?sort=asc|desc
 app.get(
   "/products/category/:categoryName",
   productController.getProductsByCategory
@@ -45,6 +44,15 @@ app.get("/invoices/user/:userId", productController.getUserInvoices);
 
 // Stock update after purchase
 app.put("/stock/user/:userId", productController.updateStockAfterPurchase);
+
+// 1. Zobraziť všetky DPF filtre pre vybrané vozidlo
+app.get("/products/dpf/:vehicleId", productController.getDpfFilters);
+
+// Predajne s < 10 kusmi oleja 10W-40
+app.get("/stores/low-oil-10w40", productController.getStoresLowOil);
+
+// Zoznam kategórií a ich priemerná cena pre tovar na sklade
+app.get("/categories/average-price", productController.getCategoriesAvgPrice);
 
 // FRONTEND SERVING
 const clientPath = path.join(__dirname, "client", "dist");

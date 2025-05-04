@@ -231,7 +231,7 @@ exports.login = (req, res) => {
 
   // overiť, či užívateľ poslal meno aj heslo
   if (!name || !password) {
-    return res.status(400).json({ error: 'Meno a heslo sú povinné.' });
+    return res.status(400).json({ error: "Meno a heslo sú povinné." });
   }
 
   const userSql = `
@@ -242,13 +242,13 @@ exports.login = (req, res) => {
 
   db.query(userSql, [name, password], (err, results) => {
     if (err) {
-      console.error('DB error pri login:', err);
-      return res.status(500).json({ error: 'Interná chyba servera.' });
+      console.error("DB error pri login:", err);
+      return res.status(500).json({ error: "Interná chyba servera." });
     }
 
     if (results.length === 0) {
       // neexistujúce alebo nesprávne prihlasovacie údaje
-      return res.status(401).json({ error: 'Nesprávne meno alebo heslo.' });
+      return res.status(401).json({ error: "Nesprávne meno alebo heslo." });
     }
 
     // úspešné prihlásenie
@@ -264,12 +264,14 @@ exports.register = (req, res) => {
 
   // overiť, či prišli všetky polia
   if (!name || !password || !password2) {
-    return res.status(400).json({ error: 'Meno, heslo a potvrdenie hesla sú povinné.' });
+    return res
+      .status(400)
+      .json({ error: "Meno, heslo a potvrdenie hesla sú povinné." });
   }
 
   // overiť zhodu hesiel
   if (password !== password2) {
-    return res.status(400).json({ error: 'Heslá sa nezhodujú.' });
+    return res.status(400).json({ error: "Heslá sa nezhodujú." });
   }
 
   // skontrolovať, či užívateľ s daným menom neexistuje
@@ -280,13 +282,15 @@ exports.register = (req, res) => {
   `;
   db.query(checkSql, [name], (err, results) => {
     if (err) {
-      console.error('DB error pri check user:', err);
-      return res.status(500).json({ error: 'Interná chyba servera.' });
+      console.error("DB error pri check user:", err);
+      return res.status(500).json({ error: "Interná chyba servera." });
     }
 
     if (results.length > 0) {
       // užívateľ existuje
-      return res.status(409).json({ error: 'Užívateľ s týmto menom už existuje.' });
+      return res
+        .status(409)
+        .json({ error: "Užívateľ s týmto menom už existuje." });
     }
 
     // vložiť nového užívateľa
@@ -296,16 +300,89 @@ exports.register = (req, res) => {
     `;
     db.query(insertSql, [name, password], (err2, result2) => {
       if (err2) {
-        console.error('DB error pri insert user:', err2);
-        return res.status(500).json({ error: 'Interná chyba servera.' });
+        console.error("DB error pri insert user:", err2);
+        return res.status(500).json({ error: "Interná chyba servera." });
       }
 
       // úspešná registrácia
       return res.status(201).json({
         success: true,
-        id_pouzivatel: result2.insertId
+        id_pouzivatel: result2.insertId,
       });
     });
   });
 };
 
+// 16. Zobraziť všetky DPF filtre pre vybrané vozidlo,
+//     počet kusov v predajniach, zoradené abecedne
+
+exports.getDpfFilters = (req, res) => {
+  const { vehicleId } = req.params;
+  const sql = `
+    SELECT 
+      T.nazov   AS dpf_filter,
+      P.nazov   AS predajna,
+      SUM(S.pocet) AS pocet_kusov
+    FROM 
+      Tovar T
+    JOIN 
+      Vozidlo V ON T.id_vozidlo = V.id_vozidlo
+    JOIN 
+      Sklad S   ON T.id_tovar   = S.id_tovar
+    JOIN 
+      Predajna P ON S.id_predajna = P.id_predajna
+    WHERE 
+      T.nazov LIKE '%Filtračná vložka%' 
+      AND V.id_vozidlo = ?
+    GROUP BY 
+      T.nazov, P.nazov
+    ORDER BY 
+      T.nazov ASC
+  `;
+
+  db.query(sql, [vehicleId], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
+};
+
+// 17. Predajne, kde je menej ako 10 kusov oleja 10W-40,
+//     zoradené zostupne podľa názvu predajne
+exports.getStoresLowOil = (req, res) => {
+  const sql = `
+    SELECT 
+      P.nazov AS predajna,
+      T.nazov AS tovar,
+      S.pocet
+    FROM Tovar T
+    JOIN Sklad S ON T.id_tovar = S.id_tovar
+    JOIN Predajna P ON S.id_predajna = P.id_predajna
+    WHERE T.nazov LIKE '%10W-40%'
+      AND S.pocet < 10
+    ORDER BY P.nazov DESC
+  `;
+  db.query(sql, (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
+};
+
+// 18. Zoznam kategórií a ich priemerná cena pre tovar na sklade,
+//     zoradené vzostupne podľa názvu kategórie
+exports.getCategoriesAvgPrice = (req, res) => {
+  const sql = `
+    SELECT 
+      K.nazov AS kategoria,
+      ROUND(AVG(T.cena), 2) AS priemerna_cena
+    FROM Tovar T
+    JOIN Kategorie K ON T.id_kategorie = K.id_kategorie
+    JOIN Sklad S ON T.id_tovar = S.id_tovar
+    WHERE S.stav = 'skladom'
+    GROUP BY K.nazov
+    ORDER BY K.nazov ASC
+  `;
+  db.query(sql, (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
+};
